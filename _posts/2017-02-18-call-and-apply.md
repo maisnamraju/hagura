@@ -52,7 +52,7 @@ convertArguments(1,32,23,23,234234,1231212221);
 
 The arguments that were passed came out with name value pairs in the first line because arguments are **array-like** where as the second line converts the array-like items into an array.
 
-Now coming back to the first example again. We replace  ```car.call(this,name,model);``` with ``` car.apply(this,[name,model]);```
+Now coming back to the first example again. We replace  `car.call(this,name,model);` with ` car.apply(this,[name,model]);`
 
 ```
 var car = function(name,model){
