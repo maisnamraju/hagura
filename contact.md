@@ -4,6 +4,5 @@ layout: post
 permalink: /contact/
 ---
 
-May be a contact form.
-
+I can be reached on
 Email: <a href="mailto:{{site.email}}">{{site.email}}</a>
