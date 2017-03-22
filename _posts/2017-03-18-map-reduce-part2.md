@@ -5,7 +5,7 @@ date:   2017-03-3 23:34:56 +0530
 ---
 [Example code](https://github.com/maisnamraju/mapreduce-nodejs)
 
-Mapreduce is pretty much supported in all mongodb libraries inside nodejs but in our case we are going to be using the native mongodb drivers inside mongodb as it is closest to native mongodb.
+Mapreduce is pretty much supported in all mongodb libraries inside nodejs with the exception of `mongorito`; In our case, we are going to be using the native mongodb drivers inside mongodb as it is closest to native mongodb.
 
 ```
 npm install mongodb
@@ -38,7 +38,7 @@ function generateData(){
         while (seconds <= 59){
           minutesData[minutes][seconds] = getRandomInt(2,100);
           seconds++;
-        }   
+        }
          minutes++;
       }
       return minutesData;
@@ -55,7 +55,7 @@ function getRandomInt(min, max) {
 ```
 db.collection.mapReduction(map,reduce,options);
 ```
-mongodb matches the query from inside the options object, it provides with a couple of options but we are concerned with only two options. The `query` and the `out`. More information can be found on the mongodb documentation [http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce)
+mongodb matches the query from inside the options object, it provides us with a couple of options that can be useful for processing and performance but we are concerned with only two options i.e the `query` and the `out` properties. More information about the other properties can be found on the mongodb documentation [http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce)
 
 ```
   {
@@ -67,7 +67,9 @@ mongodb matches the query from inside the options object, it provides with a cou
 The query is self explanatory, the second part `out` can be used to either replace the data inside the collection or can be stored to a new collection like in our example. 
 
 
-The actual mapreduce function is spread into two parts, the first process called the map function behaves receives one row of data at a time i.e one document at a time thus allowing us to simplify our code quite a bit. For the purpose of this example, we will calculate the total and the average of the values per day. 
+The actual mapreduce function is spread into two parts, the first process called the map function behaves as if it receives one row of data matched from our query at a time i.e one document at a time thus allowing us to simplify our code quite a bit. 
+
+For the purpose of this example, we will calculate the total and the average of the values per day. 
  
 ```
 function mapFunction(){
@@ -83,14 +85,18 @@ function mapFunction(){
 	emit(date,{ total: total, average: average });
 }
 ```
-After calculating the values we pass the values into the emit function.
+After calculating the values we pass the values into the emit function which sort of acts like an aggregator for the data we process and groups the data with similar keys.
 
-The next part, the reduce function returns all the values with similar keys from the map function that we emitted. The date we passed into our `emit()` method is our key in this case. 
+```
+emit(key,value);
+```
+
+The next part, the reduce function returns all the values with the same keys from the map function that we emitted. The `date` variable passed into our `emit()` method is our key in this case. 
 
 ```
 	emit(date,{ total: total, average: average });
 ```	
-The reduce method will group the values with the same date from the previous function and then push all objects with the `average` and `total` values into an array. 
+The reduce method will now return all the values with the same date i.e our key from the map function along with all the `average` and `total` values pushed into a seperate array as it's argument. 
 
 ```
 function reduceFunction(key,values){
