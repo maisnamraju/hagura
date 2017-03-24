@@ -76,7 +76,7 @@ function mapFunction(){
 	let total = 0;
 	let average = 0;
 	for(let minute of this.minutesSecondsData){
-		for(let second of minute){
+		for(let second of this.minutesSecondsData[minute]){
 			total += this.minutesSecondsData[minute][second];
 		}
 	}
