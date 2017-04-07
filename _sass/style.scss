@@ -29,7 +29,7 @@ body {
     h1,h2,h3,h4,h5,h6 {
          font-family: "Lato", "Helvetica Neue", Helvetica, sans-serif;
          font-weight: bold;
-         line-height: 1.8;
+         line-height: 1.2;
          margin: 0;
          text-transform: capitalize;
     }
@@ -39,7 +39,7 @@ a {
     color: $brand-color;
     text-decoration: none;
     &:hover{
-     color: $text-color;   
+     color: $text-color;
     }
 }
 
@@ -130,7 +130,7 @@ blockquote {
         opacity: 0.6;
     }
 
-    
+
 }
 
 .video {
@@ -141,7 +141,7 @@ blockquote {
     }
     @include media-query($on-palm) {
         height: 180px;
-    }   
+    }
 }
 
 // Adding 'Contents' headline to the TOC
@@ -184,7 +184,3 @@ footer {
 .links a {
     margin-right: 1em;
 }
-
-
-
-
