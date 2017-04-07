@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Aggregating Multiple Collections In MongoDB"
-date:   2017-04-07 23:34:56 +0530
+date:   2017-04-7 23:34:56 +0530
 ---
 
 Some might assume that because of MongoDB's document type model, it might be very difficult to query data from various collections without using multiple callbacks or DBRefs. But lately, with the help of the `$lookup` feature available on 3.2 and above; it has become very easy to query data from multiple collections using a single query.
