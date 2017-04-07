@@ -1,8 +1,10 @@
 ### your site title here
 
 title: Maisnam Raju
+description: Sharing my coding experiences
 subtitle: Learning never stops
 baseurl:  # name of the repository
+author: Maisnam Raju
 email: maisnamraju@gmail.com
 
 
@@ -16,6 +18,7 @@ analytics: UA-96060534-1
 
 # Comments
 disqus-shortname: maisnamraju-1
+
 
 
 #optimization
@@ -38,4 +41,5 @@ exclude:
 - README.md
 
 
-gems: [jekyll-seo-tag, jekyll-paginate]
+
+gems: [jekyll-seo-tag, jekyll-paginate, jekyll-sitemap ]
