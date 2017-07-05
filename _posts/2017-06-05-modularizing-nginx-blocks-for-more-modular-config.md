@@ -4,9 +4,9 @@ title:  "Modularizing nginx blocks using snippets"
 date:   2017-06-05 12:34:56 +0530
 ---
 
-Nginx configurations are much easier to write (in my honest opinion) as compared to apache because the of the structure being so similar to Objects but in case you have a complex logic in place that requires you to have really long lines of configuration code, it starts to become messy and really long which for me becomes a pain to read especially when im using an editor like VIM or nano. 
+Nginx configurations are much easier to write (in my honest opinion) as compared to apache because the of the structure being so similar to Objects but in cases where you have a complex logic in place that requires you to have really long lines of configuration code, it starts to become messy and really long which for me becomes a pain to read especially when im using an editor like VIM or nano. In such cases we can actually start making use of the `include `statement where in we can break the configurations into smaller reusable snippets. 
 
-In such cases we can actually start making use of the include statement where in we can break small pieces of code into small reusable snippets. So here is a real life scenario; at [BlueWaterTracks](http://bluewatertracks.com), we have a staging server that has serves 4 differnt applications/Users/rajusingh/maisnamraju/index.html; 2 Polymer applications and 2 api servers built on nodejs. Our staging config looked like the following 
+So here is a real life scenario; at [BlueWaterTracks](http://bluewatertracks.com), we have a staging server that has serves 4 different applications; 2 Polymer applications and 2 api servers built on nodejs. Our staging config looked like the following 
 
 ```
 server {
@@ -103,12 +103,13 @@ server {
 
 ```
 
-As there is a lot of redundant code, we could break down the code into smaller reusable snippets; To start with, we can start with breaking down the code into two reusable snippets
+As there is a lot of redundant code, you can see that it becomes difficult to debug whenever something is wrong; We could make this easier  by breaking down the code into smaller blocks that can be imported; To start with, we can start with breaking down the code into three reusable snippets
 1. The ssl configuration 
-2. the code for the reverse proxy and the .well-known
+2. the code for the reverse proxy
+3. the .well-known route
 
 ##### The SSL Config
-We can see that in the two blocks, the following configuration is common; which is the ssl config for our site. We could place this into the `/etc/nginx/snippets` folder and name it `ssl-config.conf`
+We can see that in the two blocks, the following configuration is common; which is the ssl config for our site. We could place this into the `/etc/nginx/snippets` folder and name it `ssl-config.conf`; this can later be imported into our server blocks;
 
 ```
    ssl_certificate /etc/certificates/live/demo.example.com/fullchain.pem;
@@ -132,8 +133,7 @@ We can see that in the two blocks, the following configuration is common; which 
 ```
 
 ##### Reverse Proxy 
-The reverse proxy code below is pretty redundant if you are going to be serving multiple applications via reverse proxy, so you could place it into it's own config file. Let's name this
-`proxy.conf`
+The reverse proxy code below is pretty redundant if you are going to be serving multiple applications via reverse proxy, so you could place it into it's own config file. Let's name this `proxy.conf`
 
 ```
  		 proxy_http_version 1.1;
@@ -151,9 +151,9 @@ Finally, the `.well-known ` routes are common in both the blocks and hence would
 	}
 	
 ```
-We could add even more routes if needed in the future to this block and multiple server blocks could reuse this without you having to rewrite the whole blocks again and increasing the lines of code. 
+We could add even more routes if needed in the future to this block and multiple server blocks could reuse this if needed without having to rewrite the whole blocks again and increasing the lines of code. 
 
-Finally, all thse lines of code can now be pushed into a single file like the one below. 
+Finally, all these lines of code can now be pushed into a single file like the one below. 
 
 ```
 server {
