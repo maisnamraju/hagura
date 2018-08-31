@@ -4,7 +4,7 @@ title:  "Reactive forms in Angular Part 1"
 date:   2017-07-14 11:34:56 +0530
 ---
 
-Reactive forms are a new approach to handling forms in angular. 
+Reactive forms are a new approach to handling forms in angular. They offer a more event driven approach to forms. It provides the ability to control data by using a mix of a template and an model; it also allows you to follow the reactive programming patterns ( not forced upon) you.
 
 
 #### Importing
@@ -148,11 +148,11 @@ And our actual template file
 	        <div *ngFor="course of courses; index as i " formGroupName="{{i}}">
 	        		<div>
 	        			<input formControlName="id" type="text" />
-	        			<md-error *ngIf="!course?.required">Please enter the course id</md-error>
+		    			<span class="error" *ngIf="!course?.required">Please enter the course id</span>
 					</div>
 	    		   <div>
 	        			<input formControlName="name" type="text" />
-	        			<md-error *ngIf="!course?.required">Please enter the course name</md-error>
+	        			<span class="error" *ngIf="!course?.required">Please enter the course name</span>
 	        		</div>
 	        		<div>
 	        			<button (click)="add" [disabled]="course.invalid"></button>
@@ -165,5 +165,4 @@ And our actual template file
 	     </div>
 	</form>
 ```
-
-(to.be.continued)
+[(continued in part 2)](http://blog.maisnamraju.com/2017/07/14/reactive-forms-in-angular2.html)
