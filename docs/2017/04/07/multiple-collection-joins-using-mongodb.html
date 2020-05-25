@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Aggregating Multiple Collections In MongoDB | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/13.dbc83e15.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Apr 07, 2017</p> <hr> <div class="content__default"><h2 id="aggregating-multiple-collections-in-mongodb"><a href="#aggregating-multiple-collections-in-mongodb" class="header-anchor">#</a> Aggregating Multiple Collections In MongoDB</h2> <p>Some might assume that because of MongoDB's document type model, it might be very difficult to query data from various collections without using multiple callbacks or DBRefs. But lately, with the help of the <code>$lookup</code> feature available on 3.2 and above; it has become very easy to query data from multiple collections using a single query.</p> <p>Let's assume we have a collection called <code>users</code> like the one below</p> <div class="language- extra-class"><pre class="language-text"><code>{
+   &quot;_id&quot;: ObjectId(&quot;534009e4d852427820000002&quot;),
+   &quot;name&quot;: &quot;John Doe&quot;  
+}
+</code></pre></div><p>and it is related to two other collections <code>colleges</code></p> <div class="language- extra-class"><pre class="language-text"><code>{
+  &quot;_id&quot;: Object(&quot;534009e4d852427820000003&quot;),
+  &quot;name&quot;: &quot;Stanford&quot;,
+  &quot;address&quot;: &quot;Silicon Valley&quot;,
+  &quot;departments&quot;: &quot;&quot;
+}
+</code></pre></div><p>and <code>highschools</code></p> <div class="language- extra-class"><pre class="language-text"><code>{
+  &quot;_id&quot;: Object(&quot;534009e4e8524278200000123&quot;),
+  &quot;name&quot;: &quot;Xavier School of Excellence&quot;,
+  &quot;address&quot;: &quot;somewhere in the xmen universe&quot;
+}
+</code></pre></div><p>To be able to build a relationship between these three collections we could come up with a structure such as the one below.</p> <div class="language- extra-class"><pre class="language-text"><code>{
+   &quot;_id&quot;: ObjectId(&quot;534009e4d852427820000002&quot;),
+   &quot;name&quot;: &quot;John Doe&quot;,
+   &quot;institutions&quot;: [{
+      &quot;_id&quot;: Object(&quot;534009e4e8524278200000123&quot;),
+      &quot;type&quot;: &quot;highschool&quot;
+     },
+     {
+       &quot;_id&quot;: Object(&quot;534009e4d852427820000003&quot;),
+       &quot;type&quot;: &quot;college&quot;
+      }]  
+}
+</code></pre></div><p>Now the usual way to retreive data from the three collections would be to make use of the cursor approach where in we could do something like</p> <div class="language- extra-class"><pre class="language-text"><code>db.users.find(query).forEach( function(user) {
+      user.institutions.forEach(function(institute){
+         switch(institute){
+           case &quot;highschool&quot;: ..query the highschool collection ;
+           case &quot;college&quot;: ...query the college collection.
+         }
+      });
+  });
+</code></pre></div><p>If the number of fields grow and as the data set increases, the number of callbacks might increase and the code might start getting out of hand especially in an environment like nodejs which would require a lot of promises or callbacks.</p> <p>Though the performance may not improve; we can make use of the aggregation pipeline in MongoDB to query the data from multiple collections and reformat the data into format below which can otherwise be achieved using the loops approach but starts introducing a lot of callbacks or promises.</p> <div class="language- extra-class"><pre class="language-text"><code>{
+  &quot;_id&quot;: ObjectId(&quot;534009e4d852427820000002&quot;),
+  &quot;name&quot;: &quot;John Doe&quot;,
+  &quot;institutions&quot;: [{
+     &quot;_id&quot;: Object(&quot;534009e4e8524278200000123&quot;),
+     &quot;name&quot;: &quot;Stanford&quot;,
+     &quot;address&quot;: &quot;Silicon Valley&quot;,
+     &quot;departments&quot;: &quot;&quot;,
+     &quot;type&quot;: &quot;college&quot;
+    },
+    {
+      &quot;_id&quot;: Object(&quot;534009e4d852427820000003&quot;),
+      &quot;type&quot;: &quot;highschool&quot;,
+      &quot;name&quot;: &quot;Xavier School of Excellence&quot;,
+      &quot;address&quot;: &quot;somewhere in the x-men universe&quot;
+     }]  
+}
+</code></pre></div><p>You could achieve the result above using the following approach</p> <div class="language- extra-class"><pre class="language-text"><code>db.users.aggregate([
+    { $match: query },
+     { $unwind: {&quot;path&quot;: &quot;$institutions&quot;} },
+    { $project: {
+            &quot;name&quot;:1,
+            &quot;instituteId&quot;: &quot;$institutions._id&quot;,
+            &quot;name&quot;: &quot;$name&quot;,
+            &quot;instituteType&quot;: &quot;$institutions.type&quot;
+            }
+    },
+    {
+        $lookup: {
+            &quot;from&quot;: &quot;highschools&quot;,
+            &quot;localField&quot;: &quot;instituteId&quot;,
+            &quot;foreignField&quot;: &quot;_id&quot;,
+            &quot;as&quot;: &quot;highschools&quot;
+        }
+    },
+    {
+        $lookup: {
+            &quot;from&quot;: &quot;colleges&quot;,
+            &quot;localField&quot;: &quot;instituteId&quot;,
+            &quot;foreignField&quot;: &quot;_id&quot;,
+            &quot;as&quot;: &quot;colleges&quot;
+        }
+    },
+    {
+        $unwind: {
+            &quot;path&quot;: &quot;$colleges&quot;,
+            &quot;preserveNullAndEmptyArrays&quot;: true
+        }
+    },
+    {
+        $unwind: {
+            &quot;path&quot;: &quot;$highschools&quot;,
+            &quot;preserveNullAndEmptyArrays&quot;: true
+        }
+    },
+    {
+        $group: {
+            &quot;_id&quot;: &quot;$_id&quot;,
+            &quot;name&quot;: {
+                &quot;$first&quot;: &quot;$name&quot;
+            },
+            &quot;highschools&quot;: {
+                &quot;$addToSet&quot;: {
+                    _id: &quot;$highschools._id&quot;,
+                    name: &quot;$highschools.name&quot;,
+                    &quot;type&quot;: {
+                        &quot;$cond&quot;: {
+                            &quot;if&quot;: {
+                                &quot;$eq&quot;: [&quot;$type&quot;, &quot;highschool&quot;]
+                            },
+                            &quot;then&quot;: &quot;highschool&quot;,
+                            &quot;else&quot;: null
+                        }
+                    }
+                }
+            },
+            &quot;colleges&quot;: {
+                &quot;$addToSet&quot;: {
+                    _id: &quot;$colleges._id&quot;,
+                    name: &quot;$college.name&quot;,
+                    &quot;type&quot;: {
+                        &quot;$cond&quot;: {
+                            &quot;if&quot;: {
+                                &quot;$eq&quot;: [&quot;$type&quot;, &quot;college&quot;]
+                            },
+                            &quot;then&quot;: &quot;college&quot;,
+                            &quot;else&quot;: null
+                        }
+                    },
+                    &quot;address&quot;: &quot;$college.aggress&quot;
+                }
+            }
+        }
+    }, {
+        &quot;$project&quot;: {
+            &quot;_id&quot;: 1,
+            &quot;name&quot;: 1,
+            &quot;institutions&quot;: {
+                &quot;$setUnion&quot;: [&quot;$colleges&quot;, &quot;$highschools&quot;]
+            }
+        }
+    }, {
+        &quot;$project&quot;: {
+            &quot;_id&quot;: 1,
+            &quot;name&quot;: 1,
+            institutions: {
+                $filter: {
+                    input: &quot;$institutions&quot;,
+                    as: &quot;item&quot;,
+                    cond: {
+                        $ne: [&quot;$$item.type&quot;, null]
+                    }
+                }
+            }
+        }
+    }
+]).toArray();
+</code></pre></div><p>The last steps in the query were  probably the hardest ones to get right in a user case that I was working on but the query makes more sense while reading rather than running multiple for loops</p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/13.dbc83e15.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Map Reduce using nodejs and mongodb (part 1) | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/11.458bef6e.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Mar 03, 2017</p> <hr> <div class="content__default"><h2 id="map-reduce-using-nodejs-and-mongodb-part-1"><a href="#map-reduce-using-nodejs-and-mongodb-part-1" class="header-anchor">#</a> Map Reduce using nodejs and mongodb (part 1)</h2> <p>Aggregation is one of the best features of mongodb; it can break down large datasets and bring out useful data with a few lines of code but it is not always the best solution for every problem since <code>aggregation</code> only works on <code>arrays</code>.</p> <div class="language- extra-class"><pre class="language-text"><code>[{
+	id: '2',
+	name: 'Elii'
+},
+{
+	id: '1',
+	name: 'Elii'
+}]
+</code></pre></div><p>The data above can be easily processed with an aggretaion pipeline, but if you have watched the presentations on the <a href="https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb" target="_blank" rel="noopener noreferrer">mongodb blog<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a> on how to store timeseries data, you will realize how complicated it is to actually retreive the data. In most of the cases, aggregation is not applicable for processing the data since aggregation only works with array type structures.</p> <p><a href="figure1">figure1</a></p> <div class="language- extra-class"><pre class="language-text"><code>{
+  timestamp_hour: ISODate(“2013-10-10T23:00:00.000Z”),
+  values: {
+    1: { // minute 1
+	  	 32: 1000000, // value at the 32 seconds 
+	    37: 1000000,
+	    38: 1500000,
+    },
+    2: {
+	  	 3: 1000000,
+	    10: 1000000,
+	    20: 1500000,
+    },
+    … 
+  }
+}
+</code></pre></div><p>However MongoDB has a mapreduce implemnentation that can break down such structure and help you extract your data using javascript code. It can break down large datasets like the one above into the result below.</p> <p><a href="figure2">figure2</a></p> <div class="language- extra-class"><pre class="language-text"><code>{
+  timestamp_hour: ISODate(“2013-10-10T23:01:01.000Z”),
+  value: 10000
+},
+{
+  timestamp_hour: ISODate(“2013-10-10T23:01:02.000Z”),
+  value: 150000
+}
+</code></pre></div><p>In  <code>figure 1</code>, the <code>timestamp</code> field represents the date and hour, while the values object stores the data inside the minute and seconds. Such a structure helps save a lot of storage space since you are saving up on a lot of characters.</p> <p>[Schema Design In Mongodb] (https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb) describes how to organize large data sets.</p> <p><code>mapreduce</code> can be used to reconstruct the data inside <code>figure1</code> into the one on <code>figure2</code></p> <p><a href="http://blog.maisnamraju.com/2017/03/03/map-reduce-part2.html" target="_blank" rel="noopener noreferrer">Continued here<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/11.458bef6e.js" defer></script>
+  </body>
+</html>

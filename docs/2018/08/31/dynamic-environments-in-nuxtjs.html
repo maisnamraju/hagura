@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Configuring Dynamic Environments in Nuxtjs Project | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/16.75235aaa.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Aug 31, 2018</p> <hr> <div class="content__default"><h2 id="configuring-dynamic-environments-in-nuxtjs-project"><a href="#configuring-dynamic-environments-in-nuxtjs-project" class="header-anchor">#</a> Configuring Dynamic Environments in Nuxtjs Project</h2> <p>Nuxtjs is amazing when it comes to generating serverside rendered Vuejs code and it has fantastic features when it comes to configuring and improving code workflow. But while working with Google App Engine or automated deployments I noticed that there isn't a simple and easy way to do this for such environments.</p> <p>For such environments, here is a hacky but stable way to add environment configurations to the workflow.</p> <p>At first we move the <code>nuxt.config.js</code> to a file named <code>nuxt.config.tpl</code> which is basically a template and we would replace the <code>'env'</code> fields with the environment configuration variables and render our final <code>nuxt.config.js</code> before running our code.</p> <div class="language- extra-class"><pre class="language-text"><code>module.exports = {
+  env: 'env',
+  ...
+  plugins: [{
+      src: '~plugins/ga.js',
+      ssr: false
+    },
+    {
+      src: '~plugins/analytics.js',
+      ssr: false
+    },
+    {
+      src: '~plugins/vee-validate.js',
+      ssr: true
+    },
+    { src: '~/plugins/localStorage.js', ssr: false }
+  ],
+  ...
+}
+</code></pre></div><p>to render our <code>nuxt.config.js</code> we create a small script called <code>build.js</code> which can render our final config. For deploying to cloud services like Google App Engine we can use the code below where we read the config from the <code>app.yaml</code> and create a variable which we then write into our <code>nuxt.config.js</code> file.</p> <div class="language- extra-class"><pre class="language-text"><code>const fs = require('fs');
+const yaml = require('js-yaml');
+require('dotenv').config();
+
+let envConfig = fs.readFileSync('./nuxt.config.tpl', 'utf8');
+
+if(process.env.NODE_ENV == 'development') {
+  var env = JSON.stringify({
+    API_URL: &quot;http://localhost:9090&quot;,
+    API_TOKEN: &quot;123456789&quot;
+  });
+} else {
+  const config = yaml.safeLoad(fs.readFileSync('app.yaml', 'utf8'));
+  console.log(config);
+  var env = JSON.stringify({
+    API_URL: &quot;https://api.googleapis.com&quot;,
+    API_TOKEN: &quot;12312312123&quot;
+  });
+}
+
+envConfig = envConfig.replace(/'env'/g, env);
+fs.writeFileSync('./nuxt.config.js', envConfig, 'utf8')
+
+</code></pre></div><p>This can be even more simple if we are deploying to environments like digital ocean through our <code>.env</code> configuration files</p> <div class="language- extra-class"><pre class="language-text"><code>const fs = require('fs');
+require('dotenv').config();
+
+let envConfig = fs.readFileSync('./nuxt.config.tpl', 'utf8');
+
+var env = JSON.stringify({
+API_URL: process.env.API_URL,
+API_TOKEN: process.env.API_TOKEN
+});
+
+envConfig = envConfig.replace(/'env'/g, env);
+fs.writeFileSync('./nuxt.config.js', envConfig, 'utf8')
+</code></pre></div><h4 id="adding-to-the-workflow"><a href="#adding-to-the-workflow" class="header-anchor">#</a> Adding to the workflow</h4> <p>If deploying the configuration to google app engine, we can set the following configuration where we run the <code>build.js</code> file from above and then start the nuxt process. Adding a <strong>production</strong> field which basically build the project and deploys to google app engine</p> <div class="language- extra-class"><pre class="language-text"><code>...
+&quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node server.js&quot;,
+    &quot;live&quot;: &quot;nuxt start&quot;,
+    &quot;build&quot;: &quot;nuxt build&quot;,
+    &quot;dev&quot;: &quot;npm run config &amp;&amp; npm start&quot;,
+    &quot;config&quot;: &quot;node build.js&quot;,
+    &quot;generate&quot;: &quot;nuxt generate&quot;,
+    &quot;lint&quot;: &quot;eslint --ext .js,.vue --ignore-path .gitignore .&quot;,
+    &quot;precommit&quot;: &quot;npm run lint&quot;,
+    &quot;production&quot;: &quot;npm run config &amp;&amp; npm run build &amp;&amp; gcloud config set project project-name &amp;&amp; gcloud app deploy&quot;,
+    &quot;test&quot;: &quot;jest&quot;
+  },
+...
+</code></pre></div><p>It's even more simpler if deploying to another process.</p> <div class="language- extra-class"><pre class="language-text"><code>...
+&quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node server.js&quot;,
+    &quot;live&quot;: &quot;nuxt start&quot;,
+    &quot;build&quot;: &quot;nuxt build&quot;,
+    &quot;dev&quot;: &quot;npm run config &amp;&amp; npm start&quot;,
+    &quot;config&quot;: &quot;node build.js&quot;,
+    &quot;generate&quot;: &quot;nuxt generate&quot;,
+    &quot;lint&quot;: &quot;eslint --ext .js,.vue --ignore-path .gitignore .&quot;,
+    &quot;precommit&quot;: &quot;npm run lint&quot;,
+    &quot;production&quot;: &quot;npm run config &amp;&amp; npm run build&quot;,
+    &quot;test&quot;: &quot;jest&quot;
+  },
+...
+</code></pre></div></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/16.75235aaa.js" defer></script>
+  </body>
+</html>

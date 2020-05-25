@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Map Reduce using nodejs and mongodb (part 2) | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/12.77e684e0.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Mar 18, 2017</p> <hr> <div class="content__default"><h2 id="map-reduce-using-nodejs-and-mongodb-part-2"><a href="#map-reduce-using-nodejs-and-mongodb-part-2" class="header-anchor">#</a> Map Reduce using nodejs and mongodb (part 2)</h2> <p><a href="https://github.com/maisnamraju/mapreduce-nodejs" target="_blank" rel="noopener noreferrer">Example code<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></p> <p>Mapreduce is pretty much supported in all mongodb libraries inside nodejs with the exception of <code>mongorito</code>; In our case, we are going to be using the native mongodb drivers inside mongodb as it is closest to native mongodb.</p> <div class="language- extra-class"><pre class="language-text"><code>npm install mongodb
+</code></pre></div><p>To generate the data set, I have made use of the following function that generates the data and inserts it into mongodb</p> <div class="language- extra-class"><pre class="language-text"><code>let count = 0;
+let arrayData = [];
+
+while(count &lt;= 6 ) {
+ var data = generateData();
+ arrayData.push({
+    &quot;hour&quot;: new Date(2017,1,1,count),
+ 	&quot;minutesSecondsData&quot;: data
+ });
+ count++; 
+ db.collection('example').insertMany(arrayData).then( () =&gt; {
+ 	console.log('data inserted');
+ });
+}
+
+function generateData(){
+      var minutesData = {}; 
+      var minutes = 1;
+      while(minutes &lt;= 59) {
+        var seconds = 1;
+        minutesData[minutes] = {};
+        while (seconds &lt;= 59){
+          minutesData[minutes][seconds] = getRandomInt(2,100);
+          seconds++;
+        }
+         minutes++;
+      }
+      return minutesData;
+}
+
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min)) + min;
+}
+
+</code></pre></div><div class="language- extra-class"><pre class="language-text"><code>db.collection.mapReduction(map,reduce,options);
+</code></pre></div><p>mongodb matches the query from inside the options object, it provides us with a couple of options that can be useful for processing and performance but we are concerned with only two options i.e the <code>query</code> and the <code>out</code> properties. More information about the other properties can be found on the mongodb documentation <a href="http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce" target="_blank" rel="noopener noreferrer">http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#mapReduce<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></p> <div class="language- extra-class"><pre class="language-text"><code>  {
+		query: { hour: { '$gte': new Date(2017,0,1) } },		out: {
+			replace: 'outputCollection'
+		}
+	}
+</code></pre></div><p>The query is self explanatory, the second part <code>out</code> can be used to either replace the data inside the collection or can be stored to a new collection like in our example.</p> <p>The actual mapreduce function is spread into two parts, the first process called the map function behaves as if it receives one row of data matched from our query at a time i.e one document at a time thus allowing us to simplify our code quite a bit.</p> <p>For the purpose of this example, we will calculate the total and the average of the values per day.</p> <div class="language- extra-class"><pre class="language-text"><code>function mapFunction(){
+	let total = 0;
+	let average = 0;
+	for(let minute of this.minutesSecondsData){
+		for(let second of this.minutesSecondsData[minute]){
+			total += this.minutesSecondsData[minute][second];
+		}
+	}
+	average = total/360;
+	let date = this.hour.setHours(0);
+	emit(date,{ total: total, average: average });
+}
+</code></pre></div><p>After calculating the values we pass the values into the emit function which sort of acts like an aggregator for the data we process and groups the data with similar keys.</p> <div class="language- extra-class"><pre class="language-text"><code>emit(key,value);
+</code></pre></div><p>The next part, the reduce function returns all the values with the same keys from the map function that we emitted. The <code>date</code> variable passed into our <code>emit()</code> method is our key in this case.</p> <div class="language- extra-class"><pre class="language-text"><code>	emit(date,{ total: total, average: average });
+</code></pre></div><p>The reduce method will now return all the values with the same date i.e our key from the map function along with all the <code>average</code> and <code>total</code> values pushed into a seperate array as it's argument.</p> <div class="language- extra-class"><pre class="language-text"><code>function reduceFunction(key,values){
+	let final = { total: 0, average: 0 }
+	for(let item in values ){
+	   final.total += item.total;
+	   average.total +=item.average;
+	}
+	final.average = final.average/values.length;
+	return final;
+}
+</code></pre></div><p>Finally, we return the total and average per day by adding the values passed into the reduce function.</p> <p>The final output would contain the total and the average of the values per day</p> <div class="language- extra-class"><pre class="language-text"><code>{ 
+ &quot;_id&quot; : ISODate(&quot;2017-02-01T00:30:00.000+0000&quot;), 
+ &quot;value&quot; : {
+        &quot;total&quot; : 1.0, 
+        &quot;average&quot; : 1.0
+ }
+}
+</code></pre></div></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/12.77e684e0.js" defer></script>
+  </body>
+</html>

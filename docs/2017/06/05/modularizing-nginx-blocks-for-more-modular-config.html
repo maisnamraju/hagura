@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Modularizing nginx blocks using snippets | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/14.371d417e.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Jun 05, 2017</p> <hr> <div class="content__default"><h2 id="modularizing-nginx-blocks-using-snippets"><a href="#modularizing-nginx-blocks-using-snippets" class="header-anchor">#</a> Modularizing nginx blocks using snippets</h2> <p>Nginx configurations are much easier to write (in my honest opinion) as compared to apache because the of the structure being so similar to Objects but in cases where you have a complex logic in place that requires you to have really long lines of configuration code, it starts to become messy and really long which for me becomes a pain to read especially when im using an editor like VIM or nano. In such cases we can actually start making use of the <code>include</code>statement where in we can break the configurations into smaller reusable snippets.</p> <p>So here is a real life scenario; at <a href="http://bluewatertracks.com" target="_blank" rel="noopener noreferrer">BlueWaterTracks<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>, we have a staging server that has serves 4 different applications; 2 Polymer applications and 2 api servers built on nodejs. Our staging config looked like the following</p> <div class="language- extra-class"><pre class="language-text"><code>server {
+	listen 80 default_server;
+	server_name demo.example.com;
+	return 301 https://demo.example.com$request_uri;
+}
+server {
+	listen 80 default_server;
+	server_name api.demo.example.com;
+	return 301 https://api.demo.example.com$request_uri;
+}
+server {
+	listen 443 ssl http2;
+	root /home/grant/bluewatertracks/current/client/build/bundled;
+	index index.html index.htm;
+
+	server_name demo.example.com;
+	ssl_certificate /etc/certificates/live/demo.example.com/fullchain.pem;
+	ssl_certificate_key /etc/certificates/live/demo.example.com/privkey.pem;
+	
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+	ssl_prefer_server_ciphers on;
+	ssl_ciphers &quot;EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH&quot;;
+	ssl_ecdh_curve secp384r1; # Requires nginx &gt;= 1.1.0
+	ssl_session_cache shared:SSL:10m;
+	#ssl_session_tickets off; # Requires nginx &gt;= 1.5.9
+	ssl_stapling on; # Requires nginx &gt;= 1.3.7
+	ssl_stapling_verify on; # Requires nginx =&gt; 1.3.7
+	#resolver $DNS-IP-1 $DNS-IP-2 valid=300s;
+	#resolver_timeout 5s;
+	add_header Strict-Transport-Security &quot;max-age=63072000; includeSubdomains; preload&quot;;
+	add_header X-Frame-Options DENY;
+	add_header X-Content-Type-Options nosniff;
+
+	client_max_body_size 40M;
+
+	location / {
+   		try_files $uri /index.html =404;
+	}
+
+	location ~ /.well-known {
+		 allow all;
+		 root /usr/share/nginx/html;
+
+	}
+
+	location  /userdata  {
+            root  /data/public;
+   }
+
+}
+
+server {
+	listen 443 ssl;
+
+	server_name api.demo.example.com;
+	ssl_certificate /etc/certificates/live/api.demo.example.com/fullchain.pem; 
+	ssl_certificate_key /etc/certificates/live/api.demo.example.com/privkey.pem;
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+	ssl_prefer_server_ciphers on;
+	ssl_ciphers &quot;EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH&quot;;
+	ssl_ecdh_curve secp384r1; # Requires nginx &gt;= 1.1.0
+	ssl_session_cache shared:SSL:10m;
+	#ssl_session_tickets off; # Requires nginx &gt;= 1.5.9
+	ssl_stapling on; # Requires nginx &gt;= 1.3.7
+	ssl_stapling_verify on; # Requires nginx =&gt; 1.3.7
+	#resolver $DNS-IP-1 $DNS-IP-2 valid=300s;
+	#resolver_timeout 5s;
+	add_header Strict-Transport-Security &quot;max-age=63072000; includeSubdomains; preload&quot;;
+	add_header X-Frame-Options DENY;
+	add_header X-Content-Type-Options nosniff;
+
+	client_max_body_size 40M;
+	
+	location / {
+		 proxy_pass http://127.0.0.1:4000;
+		 proxy_http_version 1.1;
+		 proxy_set_header Upgrade $http_upgrade;
+		 proxy_set_header Connection 'upgrade';
+		 proxy_set_header Host $host;
+		 proxy_cache_bypass $http_upgrade;
+	}
+
+	location ~ /.well-known {
+		 allow all;
+		 root /usr/share/nginx/html;
+	}
+
+}
+
+.... We have more lines of code that isn't here for obvious reasons
+
+</code></pre></div><p>As there is a lot of redundant code, you can see that it becomes difficult to debug whenever something is wrong; We could make this easier  by breaking down the code into smaller blocks that can be imported; To start with, we can start with breaking down the code into three reusable snippets</p> <ol><li>The ssl configuration</li> <li>the code for the reverse proxy</li> <li>the .well-known route</li></ol> <h5 id="the-ssl-config"><a href="#the-ssl-config" class="header-anchor">#</a> The SSL Config</h5> <p>We can see that in the two blocks, the following configuration is common; which is the ssl config for our site. We could place this into the <code>/etc/nginx/snippets</code> folder and name it <code>ssl-config.conf</code>; this can later be imported into our server blocks;</p> <div class="language- extra-class"><pre class="language-text"><code>   ssl_certificate /etc/certificates/live/demo.example.com/fullchain.pem;
+	ssl_certificate_key /etc/certificates/live/demo.example.com/privkey.pem;
+	
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+	ssl_prefer_server_ciphers on;
+	ssl_ciphers &quot;EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH&quot;;
+	ssl_ecdh_curve secp384r1; # Requires nginx &gt;= 1.1.0
+	ssl_session_cache shared:SSL:10m;
+	#ssl_session_tickets off; # Requires nginx &gt;= 1.5.9
+	ssl_stapling on; # Requires nginx &gt;= 1.3.7
+	ssl_stapling_verify on; # Requires nginx =&gt; 1.3.7
+	#resolver $DNS-IP-1 $DNS-IP-2 valid=300s;
+	#resolver_timeout 5s;
+	add_header Strict-Transport-Security &quot;max-age=63072000; includeSubdomains; preload&quot;;
+	add_header X-Frame-Options DENY;
+	add_header X-Content-Type-Options nosniff;
+
+	client_max_body_size 40M;
+</code></pre></div><h5 id="reverse-proxy"><a href="#reverse-proxy" class="header-anchor">#</a> Reverse Proxy</h5> <p>The reverse proxy code below is pretty redundant if you are going to be serving multiple applications via reverse proxy, so you could place it into it's own config file. Let's name this <code>proxy.conf</code></p> <div class="language- extra-class"><pre class="language-text"><code> 		 proxy_http_version 1.1;
+		 proxy_set_header Upgrade $http_upgrade;
+		 proxy_set_header Connection 'upgrade';
+		 proxy_set_header Host $host;
+		 proxy_cache_bypass $http_upgrade;
+</code></pre></div><p>Finally, the <code>.well-known</code> routes are common in both the blocks and hence would be easy to move into a single config file so that it could be reused again in newer configuration blocks. This is renamed to 'routes.conf'</p> <div class="language- extra-class"><pre class="language-text"><code>	location ~ /.well-known {
+		 allow all;
+		 root /usr/share/nginx/html;
+	}
+	
+</code></pre></div><p>We could add even more routes if needed in the future to this block and multiple server blocks could reuse this if needed without having to rewrite the whole blocks again and increasing the lines of code.</p> <p>Finally, all these lines of code can now be pushed into a single file like the one below.</p> <div class="language- extra-class"><pre class="language-text"><code>server {
+	listen 80 default_server;
+	server_name demo.example.com;
+	return 301 https://demo.example.com$request_uri;
+}
+server {
+	listen 443 ssl http2;
+	root /home/grant/bluewatertracks/current/client/build/bundled;
+	index index.html index.htm;
+
+	server_name demo.example.com;
+	include /etc/nginx/snippets/ssl-config.conf; # importing the ssl configurations 
+	
+	location / {
+   		try_files $uri /index.html =404;
+	}
+
+	location  /userdata  {
+            root  /data/public;
+   }
+
+	include /etc/nginx/snippets/routes.conf # the well known route is pushed here 
+}
+
+server {
+	listen 80 default_server;
+	server_name api.demo.example.com;
+	return 301 https://api.demo.example.com$request_uri;
+}
+
+server {
+	listen 443 ssl http2;
+
+	server_name api.demo.example.com;
+	include /etc/nginx/snippets/ssl-config.conf; # importing the ssl configurations 
+	
+	locations / {
+		 proxy_pass http://127.0.0.1:4000;
+		 include /etc/nginx/snippets/proxy.conf; # reverse proxy header configurations
+	}
+	
+	include /etc/nginx/snippets/routes.conf # the well known route is pushed here 
+}
+
+</code></pre></div><p>Using the reusable code, we managed to break down the entire code into smaller more readable code, where in debugging becomes easier because we have smaller lines of code to read.</p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/14.371d417e.js" defer></script>
+  </body>
+</html>

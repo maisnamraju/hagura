@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Reactive forms in Angular Part 1 | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/15.771e8b5e.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Jul 14, 2017</p> <hr> <div class="content__default"><h2 id="reactive-forms-in-angular-part-1"><a href="#reactive-forms-in-angular-part-1" class="header-anchor">#</a> Reactive forms in Angular Part 1</h2> <p>Reactive forms are a new approach to handling forms in angular. They offer a more event driven approach to forms. It provides the ability to control data by using a mix of a template and an model; it also allows you to follow the reactive programming patterns ( not forced upon) you.</p> <h4 id="importing"><a href="#importing" class="header-anchor">#</a> Importing</h4> <div class="language- extra-class"><pre class="language-text"><code>import { ReactiveFormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [
+    ...,
+    ReactiveFormsModule
+  ],
+  declarations: [...],
+  bootstrap: [...]
+})
+export class AppModule {}
+
+</code></pre></div><h4 id="form-data-structure"><a href="#form-data-structure" class="header-anchor">#</a> Form Data Structure</h4> <p>The Data inside the form will have the following</p> <div class="language- extra-class"><pre class="language-text"><code>	{
+		name: string,
+		courses: [{
+			id: string,
+			name:string
+		},...],
+		address: {
+			address1: string,
+			address2: string
+		}
+	}
+</code></pre></div><h4 id="formgroup-formarray-and-formcontrol"><a href="#formgroup-formarray-and-formcontrol" class="header-anchor">#</a> FormGroup, FormArray and FormControl</h4> <p>These three elements are the fundamental parts of the reactive form module. This is how the above data structure would look like once coded into a reactive form.</p> <div class="language- extra-class"><pre class="language-text"><code>	FormGroup 
+		FormControl
+		FormArray
+				FormGroup
+					FormControl
+		FormGroup
+			FormControl
+			FormControl
+</code></pre></div><p>At the lowest level what we have is the FormControl which translates to a single property or  input on the form; The FormControl can be inserted into FormArrays and FormGroups depending on the necessity. Finally, the entire stack of FormControl, FormGroups and FormArrays need to be enclosed inside a FormGroup which completes the form.</p> <p>The data inside the form can be rewritten into a FormGroup with the configuration below.</p> <div class="language- extra-class"><pre class="language-text"><code>const form = new FormGroup({
+	name: new FormControl('',Validators.required),
+	courses: new FormArray([new FormGroup({
+		id: new FormControl('', Validators.required),
+		name: new FormControl('',Validators.required)
+	})]),
+	address: new FormGroup({
+		address1: new FormControl(''),
+		address2: new FormControl('')
+	})
+})
+</code></pre></div><h4 id="formbuilder"><a href="#formbuilder" class="header-anchor">#</a> FormBuilder</h4> <p>The above code can be shortened by using the FormBuilder which shortens our code.</p> <div class="language- extra-class"><pre class="language-text"><code>const form = this.fb.group({
+	name: ['',Validators.required],
+	courses: this.fb.array([
+				this.fb.group({
+					id: ['',Validators.required],
+					name: ['', Validators.required]
+				})
+			]),
+	address: this.fb.group({
+		address1: [''],
+		address2: ['']
+	})		
+})
+</code></pre></div><p>(Validators are a bunch of methods that you attach to your FormControls to validate your input <a href="https://angular.io/api/forms/Validators" target="_blank" rel="noopener noreferrer">You could read more about them over here <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a>) You can chain a number of validators in your code.</p> <div class="language- extra-class"><pre class="language-text"><code>import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
+
+
+@Component({
+    selector: 'form-component',
+    template: './form.component.html'
+})
+
+export class FormComponent implements OnInit {
+	public form: FormGroup;
+	
+	constructor(
+		private fb: FormBuilder
+	){
+	}
+	
+	get course() {
+		return this.fb.group({
+							id: ['',Validators.required],
+							name: ['', Validators.required]
+						});
+	}
+	
+	ngOnInit() {
+		this.form = this.fb.group({
+			name: ['',Validators.required],
+			courses: this.fb.array([
+						this.course()
+					]),
+			address: this.fb.group({
+				address1: [''],
+				address2: ['']
+			})		
+		});
+	}
+	
+	submit(data) {
+	
+	
+	}
+}
+
+</code></pre></div><p>And our actual template file</p> <div class="language- extra-class"><pre class="language-text"><code>	&lt;form novalidate (ngSubmit)=&quot;submit(form.valid)&quot; [formGroup]=&quot;form&quot;&gt;
+		 &lt;input formControlName=&quot;name&quot; type=&quot;text&quot; /&gt;
+        &lt;span *ngIf=&quot;form.get('name').hasError('required') &amp;&amp; form.get('name').touched&quot;&gt;Enter Name &lt;/span&gt;
+        &lt;div formArrayName=&quot;courses&quot;&gt;
+	        &lt;div *ngFor=&quot;course of courses; index as i &quot; formGroupName=&quot;{{i}}&quot;&gt;
+	        		&lt;div&gt;
+	        			&lt;input formControlName=&quot;id&quot; type=&quot;text&quot; /&gt;
+		    			&lt;span class=&quot;error&quot; *ngIf=&quot;!course?.required&quot;&gt;Please enter the course id&lt;/span&gt;
+					&lt;/div&gt;
+	    		   &lt;div&gt;
+	        			&lt;input formControlName=&quot;name&quot; type=&quot;text&quot; /&gt;
+	        			&lt;span class=&quot;error&quot; *ngIf=&quot;!course?.required&quot;&gt;Please enter the course name&lt;/span&gt;
+	        		&lt;/div&gt;
+	        		&lt;div&gt;
+	        			&lt;button (click)=&quot;add&quot; [disabled]=&quot;course.invalid&quot;&gt;&lt;/button&gt;
+	        		&lt;/div&gt;
+	        &lt;/div&gt;
+	     &lt;/div&gt;
+	     &lt;div formGroup=&quot;address&quot;&gt;
+	     		&lt;input formControlName=&quot;address1&quot; type=&quot;text&quot; /&gt;
+				&lt;input formControlName=&quot;address2&quot; type=&quot;text&quot; /&gt;
+	     &lt;/div&gt;
+	&lt;/form&gt;
+</code></pre></div><p><a href="http://blog.maisnamraju.com/2017/07/14/reactive-forms-in-angular2.html" target="_blank" rel="noopener noreferrer">(continued in part 2)<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/15.771e8b5e.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Working with TailwindCSS inside Nuxt | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.2e3b9582.js" as="script"><link rel="preload" href="/assets/js/3.fbe91186.js" as="script"><link rel="preload" href="/assets/js/17.1f3c4640.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/18.5e65c7c9.js"><link rel="prefetch" href="/assets/js/19.050e61e5.js"><link rel="prefetch" href="/assets/js/20.6b47022b.js"><link rel="prefetch" href="/assets/js/21.e479e38b.js"><link rel="prefetch" href="/assets/js/4.d9736572.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.3a0b456c.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">May 24, 2020</p> <hr> <div class="content__default"><h2 id="working-with-tailwindcss-inside-nuxt"><a href="#working-with-tailwindcss-inside-nuxt" class="header-anchor">#</a> Working with TailwindCSS inside Nuxt</h2> <p>TailwindCSS is a low level css library that makes it possible for developers to build websites and apps without writing an amount of css using just
+a bunch of pre-defined class names. The way it differs from Bootstrap or similar CSS/UI libraries is that Tailwind doesn't restrict you to follow
+any design guidelines. You could easily use it to build a material design based UI or a Bootstrap inspired UI.</p> <p>Using tailwind with nuxt is pretty straightforward but there are some things to consider while building your Vue components on top of Tailwind. Here are
+a few things I learned while developing with tailwind and hopefully you find them helpful. (Most of the things should hold true when building using just Vue alone as well)</p> <h5 id="note-they-maynot-be-best-practices"><a href="#note-they-maynot-be-best-practices" class="header-anchor">#</a> Note: They maynot be best practices.</h5> <h3 id="_1-have-a-seperate-folder-for-tailwind-configuration"><a href="#_1-have-a-seperate-folder-for-tailwind-configuration" class="header-anchor">#</a> 1) Have a seperate folder for tailwind configuration</h3> <p>It might get too messy to have so many config files in the root folder itself, the tailwind config file can be moved to a seperate folder where all our tailwind config file can be stored. Also, the folder can be used to store other config files. To do this you can add a <code>tailwindcss</code> property inside the <code>nuxt.config.js</code> file like the one below</p> <div class="language- extra-class"><pre><code>tailwindcss: {
+    configPath: '~/config/tailwind.config.js',
+    cssPath: '~/assets/css/tailwind.css',
+    purgeCSSInDev: true,
+    exposeConfig: true
+}
+</code></pre></div><h3 id="_2-generating-your-own-color-schemes"><a href="#_2-generating-your-own-color-schemes" class="header-anchor">#</a> 2) Generating your own color schemes</h3> <p>Next, you may not want to use all the colors that come prepackaged with tailwind or you would like to replace the colors that come with it. To generate a color scheme you can use the color scheme generator[https://javisperez.github.io/tailwindcolorshades] to generate your own color schemes and paste the generated colors inside your <code>tailwind.config.js</code></p> <div class="language- extra-class"><pre class="language-text"><code>module.exports = {
+theme: {
+  colors: {
+  	'concrete': {
+  	100: '#FEFEFE',
+  	200: '#FCFCFC',
+  	300: '#FAFAFA',
+  	400: '#F6F6F6',
+  	500: '#F2F2F2',
+  	600: '#DADADA',
+  	700: '#919191',
+  	800: '#6D6D6D',
+  	900: '#494949',
+  	},
+},
+variants: {},
+plugins: []
+};
+</code></pre></div><p>The tool produces the hex color codes in the same manner as the default tailwind theme. So it could now be used using <code>.bg-concrete-100</code> which is the tailwind convention for using colors in your code.
+This may not be suitable for everyone as you may not need to use different variants of the same color. An alternative way to use the colors would be to have your own color schemes like the following</p> <div class="language- extra-class"><pre class="language-text"><code>light: {
+        'primary': '#FFFFFF',
+        'secondary': '#F5F5F5',
+        'accent': '#F8F6E7',
+        'primary-text': '#707070',
+        'secondary-text': '#707070',
+        'border': '#DBDBDB',
+        'icon': '#999999',
+        'active-link': '#B7A60F'
+      },
+      dark: {
+        'primary': '#2A2F32',
+        'secondary': '#464C50',
+        'accent': '#363C40',
+        'primary-text': '#AAAAAA',
+        'secondary-text': '#CCCCCC',
+        'border': '#000000',
+        'icon': '#999999',
+        'active-link': '#B7A60F'
+     }
+</code></pre></div><h3 id="_3-using-tailwind-inside-vue-components-with-dynamic-css-class-names"><a href="#_3-using-tailwind-inside-vue-components-with-dynamic-css-class-names" class="header-anchor">#</a> 3) Using tailwind inside Vue components with dynamic css class names</h3> <p>The nuxt tailwind package comes with <code>purgecss</code> installed to remove unused css while building for production. Because of this, using class names in your component like</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;div :class=&quot;`text-primary ${dynamicClassname}`&quot; &gt;&lt;/div&gt;
+</code></pre></div><p>will cause the the dynamic class names to disappear. To avoid this it is better to use computed properties instead for example</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;template&gt;
+&lt;div class=&quot;text-primary&quot; :class=&quot;{ `text-green-100`: isGreen, 'text-yellow-100': isYellow&quot; &gt;&lt;/div&gt;
+&lt;/template&gt;
+&lt;script&gt;
+export default {
+  props: {
+    color: String,
+  },
+  computed:{
+   isGreen() {
+     return this.color === 'green';
+   },
+   isYellow() {
+     return this.color === 'yellow';
+   }
+}
+  
+}
+&lt;/script&gt;
+</code></pre></div><h3 id="_4-avoiding-long-classes-by-using-apply-properties"><a href="#_4-avoiding-long-classes-by-using-apply-properties" class="header-anchor">#</a> 4) Avoiding long classes by using @apply properties</h3> <p>One of the things I assumed while starting out was that using the css class names in my html was the only way to make things work with tailwind but it is possible to use the <code>@apply</code> property to import the styles without having to pollute the class property so the following code</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;template&gt;
+  &lt;input id=&quot;docsearch&quot; class=&quot;transition-colors duration-100 ease-in-out bg-white&quot;&gt;
+&lt;/template&gt;
+</code></pre></div><p>could become</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;template&gt;
+  &lt;input id=&quot;docsearch&quot; class=&quot;custom-input-class&quot;&gt;
+&lt;/template&gt;
+&lt;style lang=&quot;scss&quot;&gt;
+.custom-input-class {
+  @apply .transition-colors .bg-white .shadow-md .focus-outline-0 .duration-100 ease-in-out;
+}
+&lt;/style&gt;
+</code></pre></div><p>or one could simply create custom classes based on their functionality to build up our own CSS libraries.</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;template&gt;
+  &lt;input id=&quot;docsearch&quot; class=&quot;animation colors&quot;&gt;
+&lt;/template&gt;
+&lt;style lang=&quot;scss&quot;&gt;
+.colors {
+  @apply .transition-colors .bg-white .shadow-md;
+}
+.animation {
+@apply .focus-outline-0 .duration-100 ease-in-out;
+}
+&lt;/style&gt;
+</code></pre></div><p>This encourages DRY principle and makes it easy to reference common styles in our components.</p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.2e3b9582.js" defer></script><script src="/assets/js/3.fbe91186.js" defer></script><script src="/assets/js/17.1f3c4640.js" defer></script>
+  </body>
+</html>
