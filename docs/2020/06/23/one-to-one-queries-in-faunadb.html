@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Building a One-One Relationship query in faunadb | Maisnam Raju</title>
+    <meta name="generator" content="VuePress 1.5.0">
+    
+    <meta name="description" content="Jack of many trades, master of some">
+    <link rel="preload" href="/assets/css/1.styles.4876ec08.css" as="style"><link rel="preload" href="/assets/js/app.4d3ece5d.js" as="script"><link rel="preload" href="/assets/js/3.e49a831a.js" as="script"><link rel="preload" href="/assets/js/19.3d47a47c.js" as="script"><link rel="prefetch" href="/assets/js/0.fe6ef89f.js"><link rel="prefetch" href="/assets/js/10.ae44965d.js"><link rel="prefetch" href="/assets/js/11.458bef6e.js"><link rel="prefetch" href="/assets/js/12.77e684e0.js"><link rel="prefetch" href="/assets/js/13.dbc83e15.js"><link rel="prefetch" href="/assets/js/14.371d417e.js"><link rel="prefetch" href="/assets/js/15.771e8b5e.js"><link rel="prefetch" href="/assets/js/16.75235aaa.js"><link rel="prefetch" href="/assets/js/17.1f3c4640.js"><link rel="prefetch" href="/assets/js/18.14b3365e.js"><link rel="prefetch" href="/assets/js/20.1523af3d.js"><link rel="prefetch" href="/assets/js/21.18215902.js"><link rel="prefetch" href="/assets/js/22.b075360e.js"><link rel="prefetch" href="/assets/js/23.e3b5afba.js"><link rel="prefetch" href="/assets/js/24.a95a4730.js"><link rel="prefetch" href="/assets/js/4.5e5840aa.js"><link rel="prefetch" href="/assets/js/5.568e4938.js"><link rel="prefetch" href="/assets/js/6.4deef6bb.js"><link rel="prefetch" href="/assets/js/7.60d3648b.js"><link rel="prefetch" href="/assets/js/8.c1c017dd.js"><link rel="prefetch" href="/assets/js/9.47b48755.js">
+    <link rel="stylesheet" href="/assets/css/1.styles.4876ec08.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="container"><div id="head-c"><div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><h1 id="blog-name"><a href="/" class="router-link-active">
+                Maisnam Raju
+            </a></h1> <a href="https://twitter.com/maisnamr" target="_blank" class="social"><i class="fa fa-fw fa-twitter"></i></a><a href="https://github.com/maisnamraju" target="_blank" class="social"><i class="fa fa-fw fa-github"></i></a><a href="https://www.linkedin.com/in/raju-maisnam-29831331" target="_blank" class="social"><i class="fa fa-fw fa-linkedin"></i></a> <div id="header-menu"><a href="/projects">
+     Projects 
+  </a><a href="/contact">
+     Contact 
+  </a><a href="/about">
+     About 
+  </a></div></div></div></div> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><div><article><p class="post-page-meta">Jun 23, 2020</p> <hr> <div class="content__default"><h2 id="building-a-one-one-relationship-query-in-faunadb"><a href="#building-a-one-one-relationship-query-in-faunadb" class="header-anchor">#</a> Building a One-One Relationship query in faunadb</h2> <p>Faunadb is awesome when it comes to scalability and ease of administration but I had a few problems with fql as I couldn’t figure out how to do relationship queries and how to build schemas for it. Here are a few things things I learned.</p> <p>Let us assume we have two collections <code>Users</code> and <code>Role</code> with the following fields in mysql or a relational database</p> <div class="language- extra-class"><pre class="language-text"><code>Users {
+	“userId”:1,
+	“name”: “John Doe”,
+	“email”: “johndoe@gmail.com”,
+	“roleId”: 1
+}
+</code></pre></div><p>and</p> <div class="language- extra-class"><pre class="language-text"><code>Roles {
+       “roleId”: 1,
+      	“name”: “Admin”,
+	“permissions”:  [“read”,”write”,”execute”]
+}
+</code></pre></div><p>In the mongoldb world, I would use something like</p> <div class="language- extra-class"><pre class="language-text"><code>db.collection(‘Users’).aggregate([
+	{
+          $match : { userId: 1 }
+        },{
+	 $lookup: {
+		from: ‘Roles’,
+		localField: ‘roleId”,
+                foreignField: ‘roleId”,
+		as: “roles”	
+           }
+	}
+])
+</code></pre></div><p>or the code below in mysql</p> <div class="language- extra-class"><pre class="language-text"><code>  SELECT users.*, roles.* FROM users JOIN roles  ON  users.roleId = roles.roleId WHERE users.userId = 1
+
+</code></pre></div><p>This would give use the data from both tables/collections.</p> <p>In faunadb, however, the <code>roleId</code> and <code>userId</code> can be replaced with <code>Refs</code> that allow the documents to be referenced. So the query above can be written in faunadb in the following way</p> <div class="language- extra-class"><pre class="language-text"><code>         q.Let(
+                    {
+                      user: q.Get(q.Ref(q.Collection(‘Users’), 1)),
+		      role: q.Get(
+                        q.Select(
+                          ['data’,’roleRef'],
+                          q.Var(‘user’)
+                        )
+                      )                   
+		  },
+                    {
+                      user: q.Var(‘user’),
+                      role: q.Var(‘role’),
+                    }
+                  )
+            )
+</code></pre></div><p>but this necessitates that our schema be rearranged to</p> <div class="language- extra-class"><pre class="language-text"><code>Users {
+	“name”: “John Doe”,
+	“email”: “johndoe@gmail.com”,
+	“roleRef”: &lt;ref of the role&gt; 
+}
+</code></pre></div><p>and</p> <div class="language- extra-class"><pre class="language-text"><code>Roles {
+      	“name”: “Admin”,
+	“permissions”:  [“read”,”write”,”execute”]
+}
+</code></pre></div><div class="language- extra-class"><pre><code>This removes the need for a role id and a user id and we need to reference the `Ref` of the Role using `q.Ref(“Roles”, &lt;refId of the document&gt;)`. The query would result in the data below 
+</code></pre></div><div class="language- extra-class"><pre class="language-text"><code>{
+	user: {
+			name: “John Doe”,
+			email: “johndoe@gmail.com”,   
+	},
+	role: {
+        	 	name: “Admin”,
+		permissions:  [“read”,”write”,”execute”]
+	}
+}
+</code></pre></div><p>The above can also be achieved in another way using the <strong>earlier schema</strong>.</p> <div class="language- extra-class"><pre class="language-text"><code>q.Let(
+  {
+    user: q.Get(q.Ref(q.Collection(‘Users’), 1)),
+    role: q.Get(
+      q.Ref(
+        q.Collection(‘roles’),
+        q.Select(
+          [‘roleId'],
+          q.Var(‘user’)
+        )
+      )
+    )
+  },
+  {
+    user: q.Var(‘user’),
+    role: q.Var(‘role’)
+  }
+)
+</code></pre></div><p>The above however requires work and increases the query complexity in my opinion.</p> <p>Thanks to Summer, April and Brecht from Fauna for helping me out with this.</p> <p>References:
+https://forums.fauna.com/t/querying-a-one-to-one-relations-using-fql/232/6</p></div></article> <!----></div></div></div> <center><hr width="50%"> <span id="subtitle">Jack of many trades, master of some</span> <div class="row"><div class="offset-lg-2 col-lg-8 offset-md-1 col-md-10"><p class="small">© 2020 Maisnam Raju. Code released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p></div></div></center></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.4d3ece5d.js" defer></script><script src="/assets/js/3.e49a831a.js" defer></script><script src="/assets/js/19.3d47a47c.js" defer></script>
+  </body>
+</html>
